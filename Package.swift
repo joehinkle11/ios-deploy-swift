@@ -23,7 +23,10 @@ let package = Package(
             dependencies: ["ios-deploy-swift-internal"]),
         .target(
             name: "ios-deploy-swift-internal",
-            dependencies: []),
+            dependencies: ["MobileDevice"]),
+        .binaryTarget(
+            name: "MobileDevice",
+            path: "MobileDevice.xcframework"),
         .testTarget(
             name: "ios-deploy-swiftTests",
             dependencies: ["ios-deploy-swift"]),
