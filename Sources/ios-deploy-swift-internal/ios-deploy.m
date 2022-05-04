@@ -202,7 +202,7 @@ void log_on_error(NSString* format, ...)
 {
     va_list valist;
     va_start(valist, format);
-    NSString* str = [[[NSString alloc] initWithFormat:format arguments:valist] autorelease];
+    NSString* str = [[NSString alloc] initWithFormat:format arguments:valist];
     va_end(valist);
 
     if (!_json_output) {
@@ -215,7 +215,7 @@ void on_error(NSString* format, ...)
 {
     va_list valist;
     va_start(valist, format);
-    NSString* str = [[[NSString alloc] initWithFormat:format arguments:valist] autorelease];
+    NSString* str = [[NSString alloc] initWithFormat:format arguments:valist];
     va_end(valist);
 
     if (!_json_output) {
@@ -231,14 +231,14 @@ void on_sys_error(NSString* format, ...) {
 
     va_list valist;
     va_start(valist, format);
-    NSString* str = [[[NSString alloc] initWithFormat:format arguments:valist] autorelease];
+    NSString* str = [[NSString alloc] initWithFormat:format arguments:valist];
     va_end(valist);
 
     on_error(@"%@ : %@", str, [NSString stringWithUTF8String:errstr]);
 }
 
 void __NSLogOut(NSString* format, va_list valist) {
-    NSString* str = [[[NSString alloc] initWithFormat:format arguments:valist] autorelease];
+    NSString* str = [[NSString alloc] initWithFormat:format arguments:valist];
     [[str stringByAppendingString:@"\n"] writeToFile:@"/dev/stdout" atomically:NO encoding:NSUTF8StringEncoding error:nil];
 }
 
@@ -269,7 +269,6 @@ void NSLogJSON(NSDictionary* jsonDict) {
         if (data) {
             NSString *jsonString = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
             [jsonString writeToFile:@"/dev/stdout" atomically:NO encoding:NSUTF8StringEncoding error:nil];
-            [jsonString release];
         } else {
             [@"{\"JSONError\": \"JSON error\"}" writeToFile:@"/dev/stdout" atomically:NO encoding:NSUTF8StringEncoding error:nil];
         }
@@ -531,7 +530,7 @@ NSDictionary* get_device_json_dict(const AMDeviceRef device) {
     
     CFStringRef device_hardware_model = AMDeviceCopyValue(device, 0, CFSTR("HardwareModel"));
     if (device_hardware_model) {
-        [json_dict setValue:(NSString*)device_hardware_model forKey:@"HardwareModel"];
+        [json_dict setValue:(__bridge NSString *)device_hardware_model forKey:@"HardwareModel"];
         size_t device_db_length = sizeof(device_db) / sizeof(device_desc);
         for (size_t i = 0; i < device_db_length; i ++) {
             if (CFStringCompare(device_hardware_model, device_db[i].model, kCFCompareNonliteral | kCFCompareCaseInsensitive) == kCFCompareEqualTo) {
@@ -559,7 +558,7 @@ NSDictionary* get_device_json_dict(const AMDeviceRef device) {
     
     AMDeviceDisconnect(device);
 
-    return CFAutorelease(json_dict);
+    return json_dict;
 }
 
 int get_companion_interface_type(AMDeviceRef device)
@@ -895,7 +894,7 @@ CFURLRef copy_device_app_url(AMDeviceRef device, CFStringRef identifier) {
                   nil];
 
     NSDictionary *optionsDict = [NSDictionary dictionaryWithObject:a forKey:@"ReturnAttributes"];
-    CFDictionaryRef options = (CFDictionaryRef)optionsDict;
+    CFDictionaryRef options = (__bridge CFDictionaryRef)optionsDict;
 
     check_error(AMDeviceLookupApplications(device, options, &result));
 
@@ -1822,7 +1821,7 @@ int app_exists(AMDeviceRef device)
 
     NSArray *a = [NSArray arrayWithObjects:@"CFBundleIdentifier", nil];
     NSDictionary *optionsDict = [NSDictionary dictionaryWithObject:a forKey:@"ReturnAttributes"];
-    CFDictionaryRef options = (CFDictionaryRef)optionsDict;
+    CFDictionaryRef options = (__bridge CFDictionaryRef)optionsDict;
     CFDictionaryRef result = nil;
     check_error(AMDeviceLookupApplications(device, options, &result));
 
@@ -1918,7 +1917,7 @@ void list_provisioning_profiles(AMDeviceRef device) {
     if (_json_output) {
         NSLogJSON(@{
             @"Event" : @"ListProvisioningProfiles",
-            @"Profiles" : (NSArray *)serializable_provisioning_profiles
+            @"Profiles" : (__bridge NSArray *)serializable_provisioning_profiles
         });
     } else {
         NSLogOut(@"%@", serializable_provisioning_profiles);
@@ -2006,13 +2005,13 @@ void list_bundle_id(AMDeviceRef device)
         }
     }
     NSDictionary *optionsDict = [NSDictionary dictionaryWithObject:a forKey:@"ReturnAttributes"];
-    CFDictionaryRef options = (CFDictionaryRef)optionsDict;
+    CFDictionaryRef options = (__bridge CFDictionaryRef)optionsDict;
     CFDictionaryRef result = nil;
     check_error(AMDeviceLookupApplications(device, options, &result));
 
     if (_json_output) {
         NSLogJSON(@{@"Event": @"ListBundleId",
-                    @"Apps": (NSDictionary *)result});
+                    @"Apps": (__bridge NSDictionary *)result});
     } else {
         CFIndex count;
         count = CFDictionaryGetCount(result);
@@ -2881,7 +2880,7 @@ int ios_deploy_main(int argc, char *argv[]) {
     CFUUIDRef uuid = CFUUIDCreate(NULL);
     CFStringRef str = CFUUIDCreateString(NULL, uuid);
     CFRelease(uuid);
-    tmpUUID = [(NSString*)str autorelease];
+    tmpUUID = (__bridge NSString *)str;
 
     static struct option longopts[] = {
         { "debug", no_argument, NULL, 'd' },
